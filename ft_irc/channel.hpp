@@ -6,12 +6,13 @@
 /*   By: otelliq <otelliq@student.1337.ma>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/14 18:22:39 by otelliq           #+#    #+#             */
-/*   Updated: 2024/11/14 19:19:58 by otelliq          ###   ########.fr       */
+/*   Updated: 2024/11/15 15:21:19 by otelliq          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include <iostream>
 #include <vector>
+#include <sys/socket.h>
 #include "client.hpp"
 class client;
 
@@ -42,5 +43,6 @@ class channel{
         void set_MaxUsers(int max);
         bool channel::is_Admin(client *admin);
         void channel::admin_MODE(client *admin, std::string mode, std::string arg);
+        void channel::sendToSocket(int destination_fd, std::string message);
     
 };

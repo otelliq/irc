@@ -6,7 +6,7 @@
 /*   By: otelliq <otelliq@student.1337.ma>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/14 18:22:53 by otelliq           #+#    #+#             */
-/*   Updated: 2024/11/14 19:20:44 by otelliq          ###   ########.fr       */
+/*   Updated: 2024/11/15 15:58:47 by otelliq          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -51,28 +51,91 @@ void channel::MODE(client *admin, std::string mode, std::string arg){
         }
     }
 }
+
 void channel::admin_MODE(client *admin, std::string mode, std::string arg){
     std::string reply_message;
     char mode_char = mode[0];
     size_t i = 0;
     if (mode_char == '+')
         i++;
-    else if (mode_char == '-'){
+    if (mode_char == '-'){
         for(; i < mode.size(); ++i){
-            if(mode[i] == 't' || mode[i] == 'k' || mode[i] == 'i'){
-                if (mode == "i")
+                if (mode == "i"){
                     this->modes += "i";
-                else if (mode == "k")
+                    //change invite mode
+                }
+                else if (mode == "k"){
                     this->modes += "k";
-                else if (mode == "t")
+                    //change key mode
+                }
+                else if (mode == "t"){
                     this->modes += "t";
-                else if (mode == "o")
+                    //change topic mode
+                }
+                else if (mode == "o"){
                     this->modes += "o";
-                else if (mode == "l")
+                    //add admin
+                }
+                else if (mode == "l"){
                     this->modes += "l";
-                
-            }
+                    //change limit 
+                }
+                else{
+                    reply_message = "Invalid mode";//send error message
+                    sendToSocket(admin->client_fd, reply_message);
+                }
         }
+    }
+    else{
+        for(; i < mode.size(); ++i){
+            if (mode == "i"){
+                this->modes += "i";
+                //change invite mode
+            }
+            else if (mode == "k"){
+                this->modes += "k";
+                //change key mode
+            }
+            else if (mode == "t"){
+                this->modes += "t";
+                //change topic mode
+            }
+            else if (mode == "o"){
+                this->modes += "o";
+                //add admin
+            }
+            else if (mode == "l"){
+                this->modes += "l";
+                //change limit 
+            }
+            else{
+                reply_message = "Invalid mode";//send error message
+                sendToSocket(admin->client_fd, reply_message);
+            }  
+    }
+}
+
+void channel::sendToSocket(int destination_fd, std::string message){
+    size_t total_sent = 0;
+    size_t len = message.size();
+    const char *msg = message.c_str();
+
+    while(total_sent < len){
+        int sent = send(destination_fd, msg + total_sent, len - total_sent, 0);
+        if(sent == -1)
+            throw std::runtime_error("Error sending message to socket");
+    }
+}
+
+void channel::changeInviteMode(client *admin, bool i){
+    std::string reply_message;
+    if(i){
+        this->invite_only = true;
+        reply_message = "Invite only mode is now on";
+    }
+    else{
+        this->invite_only = false;
+        reply_message = "Invite only mode is now off";
     }
 }
 // void channel::set_MODE(std::string mode){
