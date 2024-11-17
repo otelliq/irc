@@ -6,7 +6,7 @@
 /*   By: otelliq <otelliq@student.1337.ma>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/14 18:22:39 by otelliq           #+#    #+#             */
-/*   Updated: 2024/11/15 15:21:19 by otelliq          ###   ########.fr       */
+/*   Updated: 2024/11/18 00:15:27 by otelliq          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -29,9 +29,9 @@ class channel{
         bool operate;
         int max_users;
     public:
-        std::vector<client> members;
-        std::vector<client> admins;
-        std::vector<client> invites;
+        std::vector<client *> members;
+        std::vector<client *> admins;
+        std::vector<client *> invites;
         channel();
         channel(const channel &c);
         ~channel();
@@ -41,8 +41,17 @@ class channel{
         void set_MODE(std::string mode);
         void set_limit(int limit);
         void set_MaxUsers(int max);
-        bool channel::is_Admin(client *admin);
-        void channel::admin_MODE(client *admin, std::string mode, std::string arg);
-        void channel::sendToSocket(int destination_fd, std::string message);
+        void set_Admin(client *param);
+        bool is_Admin(client *admin);
+        void admin_MODE(client *admin, std::string mode, std::string arg);
+        // void sendToSocket(int destination_fd, std::string message);
+        void setbuffer(std::string message, int destination_fd);
+        void changeInviteMode(client *admin, bool i);
+        void changeKeyMode(client *admin, std::string key, bool i);
+        void changeTopicMode(client *admin, bool i);
+        void add_admin(client *admin, std::string name);
+        void remove_admin(client *admin, std::string name);
+        void change_MaxUser(client *admin, int i, std::string &param);
+        client *get_user(std::string name);
     
 };
