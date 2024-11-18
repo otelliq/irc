@@ -6,7 +6,7 @@
 /*   By: otelliq <otelliq@student.1337.ma>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/14 18:22:39 by otelliq           #+#    #+#             */
-/*   Updated: 2024/11/18 13:05:49 by otelliq          ###   ########.fr       */
+/*   Updated: 2024/11/18 22:37:37 by otelliq          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -71,6 +71,7 @@ class channel{
         void set_Admin(client *param);
         std::string get_name();
         bool is_Admin(client *admin);
+        bool onChannel(client *admin);
         void admin_MODE(client *admin, std::string mode, std::string arg);
         void MODE(client *admin, std::string mode, std::string arg);
         void setbuffer(std::string message, int destination_fd);
@@ -82,5 +83,9 @@ class channel{
         void change_MaxUser(client *admin, int i, std::string &param);
         client *get_user(std::string name);
         std::string get_UserInfo(client *admin, bool i);
+        void send_to_all(std::string message);
+        void KICK(client *admin, client *user, std::string reason);
+        bool is_inChannel(client *admin);
+        void remove_user(client *admin);
     
 };
