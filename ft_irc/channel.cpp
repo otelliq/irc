@@ -6,7 +6,7 @@
 /*   By: otelliq <otelliq@student.1337.ma>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/14 18:22:53 by otelliq           #+#    #+#             */
-/*   Updated: 2024/11/18 00:17:20 by otelliq          ###   ########.fr       */
+/*   Updated: 2024/11/18 13:40:13 by otelliq          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -40,19 +40,40 @@ void channel::set_MaxUsers(int max){
     has_limit = true;
 }
 
-// void channel::set_Admin(client *param){
-//     admins.push_back(param);
-// }
+std::string channel::get_name(){
+    return name;
+}
+
 bool channel::is_Admin(client *admin){
     if(std::find(admins.begin(), admins.end(), *admin) != admins.end())
         return true;
     return false;
 }
+
 void channel::MODE(client *admin, std::string mode, std::string arg){
+    std::string reply_message;
     if(!mode.empty()){
-        if(is_Admin(admin)){
-            
+        if(is_Admin(admin))
+            admin_MODE(admin, mode, arg);
+        else{
+            reply_message = get_UserInfo(admin, false) + ERR_CHANOPRIVSNEEDED(admin->nickname, this->get_name());
+            setbuffer(reply_message, admin->client_fd);
+            return;
         }
+    }
+    else{
+        reply_message = get_UserInfo(admin, true) + RPL_CHANNELMODEIS(admin->nickname, this->get_name(), this->modes);
+        //rpl list of modes
+        reply_message += get_UserInfo(admin, false) + " 353 " + admin->nickname + " = " + this->get_name() + " :";
+        for(size_t i = 0; i < members.size(); ++i){
+            reply_message += "@" + members[i]->nickname + " ";
+        }
+        reply_message += "\r\n";
+        setbuffer(reply_message, admin->client_fd);
+        setbuffer(get_UserInfo(admin, false) + RPL_ENDOFWHOIS(admin->nickname, this->get_name()), admin->client_fd);
+        setbuffer(reply_message, admin->client_fd);
+        reply_message = get_UserInfo(admin, true) + RPL_CREATIONTIME(admin->nickname, this->get_name(), "creation time"); // get creation time
+        setbuffer(reply_message, admin->client_fd);
     }
 }
 
@@ -62,7 +83,7 @@ void channel::admin_MODE(client *admin, std::string mode, std::string arg){
     size_t i = 0;
     if (mode_char == '+')
         i++;
-    if (mode_char == '-'){
+    if (mode_char != '-'){
         for(; i < mode.size(); ++i){
                 if (mode == "i"){
                     this->modes += "i";
@@ -90,7 +111,7 @@ void channel::admin_MODE(client *admin, std::string mode, std::string arg){
                     //change limit 
                 }
                 else{
-                    reply_message = "Invalid mode";//send error message
+                    reply_message = get_UserInfo(admin, false) + ERR_UNKNOWNMODE(admin->nickname, mode[i]);
                     setbuffer(reply_message, admin->client_fd);
                 }
         }
@@ -123,7 +144,7 @@ void channel::admin_MODE(client *admin, std::string mode, std::string arg){
                 //change limit 
             }
             else{
-                reply_message = "Invalid mode";//send error message
+                reply_message = get_UserInfo(admin, false) + ERR_UNKNOWNMODE(admin->nickname, mode[i]);
                 setbuffer(reply_message, admin->client_fd);
             }  
     }
@@ -146,12 +167,12 @@ void channel::change_MaxUser(client *admin, int i, std::string &param){
     int max_users = std::stoi(param);//change this later
     if(i){
         if(param.empty()){
-            reply_message = "No limit specified";//send error message
+            reply_message = get_UserInfo(admin, false) + ERR_NEEDMOREPARAMS(admin->nickname, "MODE" + " +l ");
             setbuffer(reply_message, admin->client_fd);
             return;
     }
         if(max_users <= 0){
-            reply_message = "dfgggdsdsfgdsfgfs";//send error message
+            reply_message = get_UserInfo(admin, false) + ERR_NEEDMOREPARAMS(admin->nickname, "MODE" + " +l ");
             setbuffer(reply_message, admin->client_fd);
             return;
         }
@@ -182,19 +203,19 @@ void channel::changeKeyMode(client *admin, std::string key, bool i){
     std::string reply_message;
     if(i){
         if(key.empty()){
-            reply_message = "Key mode is now on";//change err later
+            reply_message = get_UserInfo(admin, false) + ERR_NEEDMOREPARAMS(admin->nickname, "MODE" + " +k");
             setbuffer(reply_message, admin->client_fd);
             return;
         }
         else{
             setPassword(key);
             this->has_password = true;
-            reply_message = "Key mode is now on";//cahnge this too
+            reply_message = get_UserInfo(admin, false) + RPL_CHANNELMODEIS(admin->nickname, this->get_name(), " +k" );
         }
     }
     else{
         this->has_password = false;
-        reply_message = "Key mode is now off";//change this too
+        reply_message = get_UserInfo(admin, false) + RPL_CHANNELMODEIS(admin->nickname, this->get_name(), " -k" );
     }
 
 }
@@ -203,11 +224,11 @@ void channel::changeTopicMode(client *admin, bool i){
     std::string reply_message;
     if(i){
         this->has_topic = true;
-        reply_message = "Topic mode is now on";//change this too
+        reply_message = get_UserInfo(admin, false) + RPL_CHANNELMODEIS(admin->nickname, this->get_name(), " +t" );
     }
     else{
         this->has_topic = false;
-        reply_message = "Topic mode is now off";//change this too
+        reply_message = get_UserInfo(admin, false) + RPL_CHANNELMODEIS(admin->nickname, this->get_name(), " -t" );
     }
 }
 
@@ -215,7 +236,7 @@ void channel::add_admin(client *admin, std::string name){
     this->operate = true;
     std::string reply_message;
     if(name.empty()){
-        reply_message = "No user specified";//send error message
+        reply_message = get_UserInfo(admin, false) + ERR_NEEDMOREPARAMS(admin->nickname, "MODE" + " +o " + name);
         setbuffer(reply_message, admin->client_fd);
         return;
     }
@@ -225,30 +246,30 @@ void channel::add_admin(client *admin, std::string name){
         //send message
     }
     else{
-        reply_message = "User not found";//send error message
+        reply_message= get_UserInfo(user, false) + ERR_USERNOTINCHANNEL(admin->nickname, user->nickname, this->get_name());
         setbuffer(reply_message, admin->client_fd);
     }
         
 }
-void channel::remove_admin(client *admin, std::string name){
+void channel::remove_admin(client *admin, std::string name) {
     this->operate = false;
     std::string reply_message;
     client *user = get_user(name);
-    if(user)
-    {
-        for(size_t i = 0; i < admins.size(); ++i)
-            std::find(admins.begin(), admins.end(), *admin);
-        if(i != admins.size())
-            this->admins.erase(i);//there could be a problem here
-        // else
-            // throw std::runtime_error("admin not found");
-        //send error message
+
+    if (user) {
+        std::vector<client*>::iterator it = std::find(admins.begin(), admins.end(), admin);
+
+        if (it != admins.end()){
+            admins.erase(it);
+            //send message to all users
+        }
     }
-    else
-        reply_message = "User not found";//send error message
+    else {
+        reply_message = get_UserInfo(user, false) + ERR_USERNOTINCHANNEL(admin->nickname, user->nickname, this->get_name());
         setbuffer(reply_message, admin->client_fd);
-    
+    }
 }
+
 void channel::setbuffer(std::string message, int destination_fd){
     size_t i;
     if(i = send(destination_fd, message.c_str(), message.size(), 0) == -1)
@@ -263,4 +284,10 @@ client *channel::get_user(std::string name){
             return members[i];
     }
     return NULL;
+}
+std::string channel::get_UserInfo(client *admin, bool i){
+    if(i)
+        return ":" + admin->nickname + "!" + admin->username + "@" + admin->servername + " ";
+    else
+        return ":" + admin->servername + " ";
 }
