@@ -6,11 +6,12 @@
 /*   By: otelliq <otelliq@student.1337.ma>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/14 18:22:39 by otelliq           #+#    #+#             */
-/*   Updated: 2024/11/19 10:29:04 by otelliq          ###   ########.fr       */
+/*   Updated: 2024/11/19 16:39:19 by otelliq          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include <iostream>
+#include <sstream>
 #include <vector>
 #include <sys/socket.h>
 #include "client.hpp"
@@ -43,12 +44,14 @@
 
 class client;
 
-class channel{
+class Channel{
     private:
+
         std::string name;
         std::string topic;
-        std::string password;
         std::string modes;
+        std::string password;
+        std::string creation_time;
         bool invite_only;
         bool has_password;
         bool has_topic;
@@ -56,39 +59,51 @@ class channel{
         bool operate;
         int max_users;
     public:
-        std::vector<client *> members;
+
         std::vector<client *> admins;
+        std::vector<client *> Clients;
         std::vector<client *> invites;
-        channel();
-        channel(const channel &c);
-        ~channel();
-        void setTopic(std::string topic);
-        void setPassword(std::string password);
-        void set_name(std::string name);
-        void set_MODE(std::string mode);
-        void set_limit(int limit);
-        void set_MaxUsers(int max);
-        void set_Admin(client *param);
-        std::string get_name();
+
+        Channel();
+        ~Channel();
+        Channel(const Channel &src);
+        Channel &operator=(const Channel &src);
+        
+        void SetLimit(int limit);
+        void SetMaxUsers(int max);
+        void SetName(std::string name);
+        void SetMode(std::string mode);
+        void SetTopic(std::string topic);
+        void SetPassword(std::string password);
+        void SetTime(std::string time);
+        void SetAdmin(client *param);
+        void setbuffer(std::string message, int destination_fd);
+
+        std::string GetName();
+        std::string get_time();
+        std::string GetUserInfo(client *admin, bool i);
+        client *GetUser(std::string name);
+    
         bool is_Admin(client *admin);
         bool onChannel(client *admin);
+        bool is_inChannel(client *admin);
+
         void admin_MODE(client *admin, std::string mode, std::string arg);
-        void MODE(client *admin, std::string mode, std::string arg);
-        void setbuffer(std::string message, int destination_fd);
         void changeInviteMode(client *admin, bool i);
         void changeKeyMode(client *admin, std::string key, bool i);
         void changeTopicMode(client *admin, bool i);
         void add_admin(client *admin, std::string name);
         void remove_admin(client *admin, std::string name);
         void change_MaxUser(client *admin, int i, std::string &param);
-        client *get_user(std::string name);
-        std::string get_UserInfo(client *admin, bool i);
         void send_to_all(std::string message);
-        void KICK(client *admin, client *user, std::string reason);
-        bool is_inChannel(client *admin);
         void remove_user(client *admin);
+
+        void MODE(client *admin, std::string mode, std::string arg);
+        void KICK(client *admin, client *user, std::string reason);
         void INVITE(client *admin, client *user);
         void TOPIC(client *admin, std::string topic);
         void PART(client *admin, std::string reason);
+        void NICK(client *admin, std::string new_nick);
+        void USER(client *admin, std::string username, std::string realname);
     
 };
