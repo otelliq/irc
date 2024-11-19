@@ -6,7 +6,7 @@
 /*   By: otelliq <otelliq@student.1337.ma>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/14 18:22:53 by otelliq           #+#    #+#             */
-/*   Updated: 2024/11/18 22:41:58 by otelliq          ###   ########.fr       */
+/*   Updated: 2024/11/19 11:08:29 by otelliq          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -235,11 +235,11 @@ void channel::remove_user(client *admin) {
         members.erase(it);
     std::vector<client*>::iterator it1 = std::find(admins.begin(), admins.end(), admin);
     if (it1 != admins.end())
-        admins.erase(it1);
+        admins.erase(it1);//if anythign goes wrong here, check the iterator
     if(invite_only){
         std::vector<client*>::iterator it2 = std::find(invites.begin(), invites.end(), admin);
         if (it2 != invites.end())
-            invites.erase(it2);
+            invites.erase(it2);//if anythign goes wrong here, check the iterator
     }
 }
 void channel::remove_admin(client *admin, std::string name) {
@@ -304,9 +304,6 @@ void channel::KICK(client *admin, client *user, std::string reason){
     remove_user(user);
 }
 
-
-
-
 bool channel::is_inChannel(client *admin){
     for (std::vector<client *>::const_iterator it = members.begin(); it != members.end(); ++it) {
         if (*it == admin) {
@@ -315,3 +312,75 @@ bool channel::is_inChannel(client *admin){
     }
     return false;
 }
+
+void channel::INVITE(client *admin, client *user){
+    std::string reply_message;
+    if(!is_inChannel(admin)){
+        reply_message = get_UserInfo(admin, false) + ERR_NOTONCHANNEL(admin->nickname, this->get_name());
+        setbuffer(reply_message, admin->client_fd);
+        return;
+    }
+    if(!is_inChannel(user)){
+        reply_message = get_UserInfo(admin, false) + ERR_NOTONCHANNEL(user->nickname, this->get_name());
+        setbuffer(reply_message, admin->client_fd);
+        return;
+    }
+    //isalpha
+    this->invites.push_back(user);
+    setbuffer(get_UserInfo(admin, false) + RPL_INVITING(admin->nickname, user->nickname, this->get_name()), user->client_fd);
+    setbuffer(get_UserInfo(admin, false) + RPL_INVITING(admin->nickname, user->nickname, this->get_name()), admin->client_fd);
+}
+
+void channel::TOPIC(client *admin, std::string topic_message){
+    std::string reply_message;
+    std::string error_message;
+    if(!is_inChannel(admin)){
+        error_message = get_UserInfo(admin, false) + ERR_NOTONCHANNEL(admin->nickname, this->get_name());
+        setbuffer(error_message, admin->client_fd);
+        return;
+    }
+    if(has_topic){
+        if(!topic.empty()){
+            setTopic(topic_message);
+			reply_message = get_UserInfo(admin, true) + RPL_TOPIC(admin->nickname, this->get_name(), topic_message);
+            setbuffer(reply_message, admin->client_fd);
+            return;
+        }
+        else{
+            reply_message = get_UserInfo(admin, true) + RPL_NOTOPIC(admin->nickname, this->get_name());
+            setbuffer(reply_message, admin->client_fd);
+            return;
+        }
+    }
+    else{
+        if(!topic_message.empty()){
+            setTopic(topic_message);
+            reply_message = get_UserInfo(admin, true) + RPL_TOPIC(admin->nickname, this->get_name(), topic_message);
+            setbuffer(reply_message, admin->client_fd);
+            return;
+        }
+        else{
+            reply_message = get_UserInfo(admin, false) + RPL_NOTOPIC(admin->nickname, this->get_name());
+            setbuffer(reply_message, admin->client_fd);
+            return;
+        }
+    }
+}
+
+void channel::PART(client *admin, std::string reason){
+    std::string reply_message;
+    if(!is_inChannel(admin)){
+        reply_message = get_UserInfo(admin, false) + ERR_NOTONCHANNEL(admin->nickname, this->get_name());
+        setbuffer(reply_message, admin->client_fd);
+    }
+    else{
+        remove_user(admin);
+		send_to_all(get_UserInfo(admin, true) + " PART " + this->get_name() + " " + reason + "\r\n");
+    }
+}
+
+//KICK
+//INVITE
+//TOPIC
+//PART
+//MODE

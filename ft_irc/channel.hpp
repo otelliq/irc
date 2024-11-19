@@ -6,7 +6,7 @@
 /*   By: otelliq <otelliq@student.1337.ma>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/14 18:22:39 by otelliq           #+#    #+#             */
-/*   Updated: 2024/11/18 22:37:37 by otelliq          ###   ########.fr       */
+/*   Updated: 2024/11/19 10:29:04 by otelliq          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -87,5 +87,8 @@ class channel{
         void KICK(client *admin, client *user, std::string reason);
         bool is_inChannel(client *admin);
         void remove_user(client *admin);
+        void INVITE(client *admin, client *user);
+        void TOPIC(client *admin, std::string topic);
+        void PART(client *admin, std::string reason);
     
 };
