@@ -6,7 +6,7 @@
 /*   By: otelliq <otelliq@student.1337.ma>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/14 18:22:53 by otelliq           #+#    #+#             */
-/*   Updated: 2024/11/19 16:50:58 by otelliq          ###   ########.fr       */
+/*   Updated: 2024/11/20 20:22:53 by otelliq          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -431,27 +431,64 @@ void Channel::PART(client *admin, std::string reason){
 
 /////////////////////////////////////
 
-void Channel::NICK(client *admin, const std::string new_nick) {//reference--------
+// void Channel::NICK(client *admin, const std::string new_nick) {//reference--------
 
-    for (size_t i = 0; i < Clients.size(); ++i) {
-        if (Clients[i]->nickname == new_nick) {
-            std::string message = GetUserInfo(admin, false) + " " + admin->nickname + " " + new_nick + ":Nickname is already in use\r\n";
-            send(admin->client_fd, message.c_str(), message.size(), 0);
-            return;
-        }
-    }
+//     for (size_t i = 0; i < Clients.size(); ++i) {
+//         if (Clients[i]->nickname == new_nick) {
+//             std::string message = GetUserInfo(admin, false) + " " + admin->nickname + " " + new_nick + ":Nickname is already in use\r\n";
+//             send(admin->client_fd, message.c_str(), message.size(), 0);
+//             return;
+//         }
+//     }
 
-    admin->nickname = new_nick;
-}
+//     admin->nickname = new_nick;
+// }
 
-void Channel::USER(client *admin, std::string username, std::string realname) {
-    if(realname.find(":")){
-        std::string message = ERR_NEEDMOREPARAMS1();
-        send(admin->client_fd, message.c_str(), message.size(), 0);
-    }
-    else{
-        admin->username = username;
-        admin->realname = realname;
-    }
+// void Channel::USER(client *admin, std::string username, std::string realname) {
+//     if(realname.find(":")){
+//         std::string message = ERR_NEEDMOREPARAMS1();
+//         send(admin->client_fd, message.c_str(), message.size(), 0);
+//     }
+//     else{
+//         admin->username = username;
+//         admin->realname = realname;
+//     }
     
+// }
+
+// void Channel::PASS(client *admin, std::string password) {
+//     // if(password == this->server.password)//ta nmergiw w assigni hada l password d server
+//         admin->has_password = true;
+//     // else{
+//         std::string message = ERR_PASSWDMISMATCH();
+//         send(admin->client_fd, message.c_str(), message.size(), 0);
+//     // }
+// }
+
+int Channel::PRIVMSG(client *admin, client *target, std::string message) {
+    if (message.find("#") == 0){
+        if (!this->onChannel(admin)){
+            std::string error_msg = ERR_NOTONCHANNEL(admin->nickname, this->GetName());
+            send(admin->client_fd, error_msg.c_str(), error_msg.length(), 0);
+            return -1;
+        }
+        for (size_t i = 0; i < Clients.size(); ++i) {
+            if (Clients[i]->nickname == admin->nickname) {
+                continue;
+            }
+            std::string msg_to_send = ":" + admin->nickname + "!" + admin->username + "@localhost PRIVMSG " + this->GetName() + " :" + message + "\r\n";
+            send(Clients[i]->client_fd, msg_to_send.c_str(), msg_to_send.length(), 0);
+        }
+        return 0;
+    }
+
+    if (target == NULL || target->nickname.empty()){
+        std::string error_msg = ERR_NOSUCHNICK(admin->nickname, "unknown");
+        send(admin->client_fd, error_msg.c_str(), error_msg.length(), 0);
+        return -1;
+    }
+
+    std::string msg_to_send = ":" + admin->nickname + "!" + admin->username + "@localhost PRIVMSG " + target->nickname + " :" + message + "\r\n";
+    send(target->client_fd, msg_to_send.c_str(), msg_to_send.length(), 0);
+    return 0;
 }

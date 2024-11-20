@@ -6,7 +6,7 @@
 /*   By: otelliq <otelliq@student.1337.ma>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/14 18:22:39 by otelliq           #+#    #+#             */
-/*   Updated: 2024/11/19 16:39:19 by otelliq          ###   ########.fr       */
+/*   Updated: 2024/11/20 18:51:47 by otelliq          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -82,7 +82,7 @@ class Channel{
         std::string GetName();
         std::string get_time();
         std::string GetUserInfo(client *admin, bool i);
-        client *GetUser(std::string name);
+        client     *GetUser(std::string name);
     
         bool is_Admin(client *admin);
         bool onChannel(client *admin);
@@ -105,5 +105,7 @@ class Channel{
         void PART(client *admin, std::string reason);
         void NICK(client *admin, std::string new_nick);
         void USER(client *admin, std::string username, std::string realname);
+        void PASS(client *admin, std::string password);
+        int  PRIVMSG(client *admin, client *target, std::string message);
     
 };
